@@ -28,7 +28,7 @@ const hasPurchased = (req, res, next) => {
     }
     res.redirect("/buying");
 };
-
+console.log("hallo")
 // Routes
 app.get("/",(req, res) => {
     res.render("index", { title: "Home"});
