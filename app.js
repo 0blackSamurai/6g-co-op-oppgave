@@ -78,6 +78,6 @@ app.get("/profile",(req, res) => {
     })
 
 // Start server
-app.listen(5000, () => {
-    console.log("Server started on port 5000");
+app.listen(6000, () => {
+    console.log("Server started on port 6000");
 });
