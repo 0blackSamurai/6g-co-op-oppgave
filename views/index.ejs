@@ -2,14 +2,37 @@
 <body>
     <%- include("./partials/navbar") %>
     <h1>Welcome to the Home Page</h1>
-    <form action="/login" method="POST">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required>
-        <br>
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required>
-        <br>
-        <button type="submit" id="login">Login</button>
-    </form>
+
+    <div class="form-container">
+        <!-- Login Form -->
+        <div class="login-form">
+            <h2>Login</h2>
+            <form action="/login" method="POST">
+                <label for="login-username">Username:</label>
+                <input type="text" id="login-username" name="username" required>
+                <br>
+                <label for="login-password">Password:</label>
+                <input type="password" id="login-password" name="password" required>
+                <br>
+                <button type="submit">Login</button>
+            </form>
+        </div>
+
+        <!-- Create User Form -->
+        <div class="create-user-form">
+            <h2>Create New Account</h2>
+            <form action="/create-user" method="POST">
+                <label for="create-username">Username:</label>
+                <input type="text" id="create-username" name="username" required>
+                <br>
+                <label for="create-password">Password:</label>
+                <input type="password" id="create-password" name="password" required>
+                <br>
+                <button type="submit">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/app.js"></script>
 </body>
 </html>
