@@ -2,8 +2,24 @@
 <body>
     <%- include("./partials/navbar") %>
     <h1>Buying Page</h1>
-    <form action="/buy" method="POST">
-        <button type="submit">Buy</button>
-    </form>
+    
+    <% burgers.forEach(burger => { %>
+        <div class="burger-box">
+            <h2><%= burger.name %></h2>
+            <p>Price: $<%= burger.price %> <br> <%= burger.description %></p>
+            <h4>Ingredients</h4>
+            <ul>
+                <% burger.ingredients.forEach(ingredient => { %>
+                    <li><%= ingredient %></li>
+                <% }) %>
+            </ul>
+            <form action="/buy" method="POST">
+                <button type="submit">Buy</button>
+            </form>
+            <form action="/edit/<%= burger.id %>" method="get">
+                <button>Edit</button>
+            </form>
+        </div>
+    <% }) %>
 </body>
 </html>
