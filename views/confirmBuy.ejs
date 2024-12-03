@@ -1,0 +1,28 @@
+<%- include("./partials/header") %>
+<body>
+    <%- include("./partials/navbar") %>
+
+    <h1>Confirm Your Buy</h1>
+    <h1>testing if</h1>
+    <div class="burger-box">
+        <h2><%= burger.name %></h2>
+        <p>Price: $<%= burger.price %></p>
+        <p><%= burger.description %></p>
+        <h4>Ingredients</h4>
+        <ul>
+            <% burger.ingredients.forEach(ingredient => { %>
+                <li><%= ingredient %></li>
+            <% }) %>
+        </ul>
+
+        <form action="/edit/<%= burger.id %>" method="get">
+            <button>Edit</button>
+        </form>
+
+        <form action="/confirmBuy" method="POST">
+            <button type="submit">Confirm Buy</button>
+        </form>
+    </div>
+
+</body>
+</html>

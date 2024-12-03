@@ -24,7 +24,7 @@
 
     <form id="save-form" action="/edit/<%= burger.id %>" method="POST">
         <input type="hidden" name="ingredients" id="ingredients-input" value="<%= burger.ingredients.join(',') %>">
-        <button type="submit">Save</button>
+        <button type="submit">Save and Confirm</button>
     </form>
 
     <script>
@@ -32,10 +32,8 @@
         const addIngredientsDiv = document.getElementById('add-ingredients');
         const ingredientsInput = document.getElementById('ingredients-input');
 
-        // Initialize ingredients array
         let ingredients = ingredientsInput.value ? ingredientsInput.value.split(',') : [];
 
-        // Remove an ingredient
         currentIngredientsDiv.addEventListener('click', (event) => {
             if (event.target.classList.contains('remove-ingredient')) {
                 const index = event.target.dataset.index;
@@ -44,7 +42,6 @@
             }
         });
 
-        // Add an ingredient
         addIngredientsDiv.addEventListener('click', (event) => {
             if (event.target.classList.contains('add-ingredient')) {
                 const ingredient = event.target.dataset.ingredient;
@@ -53,11 +50,9 @@
             }
         });
 
-        // Update the UI and the hidden input value
         function updateUI() {
             ingredientsInput.value = ingredients.join(',');
 
-            // Update current ingredients
             currentIngredientsDiv.innerHTML = '';
             ingredients.forEach((ingredient, index) => {
                 currentIngredientsDiv.innerHTML += `<button class="remove-ingredient" data-index="${index}">
@@ -65,7 +60,6 @@
                 </button>`;
             });
 
-            // Update addable ingredients
             addIngredientsDiv.innerHTML = '';
             <% availableIngredients.forEach(availableIngredient => { %>
                 if (!ingredients.includes('<%= availableIngredient %>')) {

@@ -1,0 +1,25 @@
+<%- include("./partials/header") %>
+<body>
+    <%- include("./partials/navbar") %>
+
+    <form action="/create-burger" method="POST">
+        <label for="name">Burger Name:</label>
+        <input type="text" id="name" name="name" required><br><br>
+
+        <label for="price">Price ($):</label>
+        <input type="number" id="price" name="price" step="0.01" required><br><br>
+
+        <label for="ingredients">Ingredients:</label><br>
+        <div>
+            <% availableIngredients.forEach(ingredient => { %>
+                <input type="checkbox" id="<%= ingredient %>" name="ingredients" value="<%= ingredient %>">
+                <label for="<%= ingredient %>"><%= ingredient %></label><br>
+            <% }) %>
+        </div>
+        <br>
+        <button type="submit">Create Burger</button>
+    </form>
+    <a href="/buying">Back to Burger Menu</a>
+
+</body>
+</html>
