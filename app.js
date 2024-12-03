@@ -14,26 +14,63 @@ mongoose.connect("mongodb://127.0.0.1:27017/Burgershop", {
 .then(() => console.log("Connected to Burgershop database successfully"))
 .catch((err) => console.error("MongoDB connection error:", err));
 
-// Rest of your code remains the same
+// User Schema and Model
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
-    password: { type: String, required: true }
+    password: { type: String, required: true },
+    savedBurgers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Burger' }] 
 });
+const customizedBurgerSchema = new mongoose.Schema({
+    user: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User', 
+        required: true 
+    },
+    originalBurger: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Burger', 
+        required: true 
+    },
+    customIngredients: [{
+        name: { type: String, required: true },
+        quantity: { type: Number, default: 1 }
+    }],
+    totalPrice: { 
+        type: Number, 
+        required: true 
+    },
+    createdAt: { 
+        type: Date, 
+        default: Date.now 
+    }
+});
+
+const CustomizedBurger = mongoose.model('CustomizedBurger', customizedBurgerSchema);
+
+
+const burgerSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    price: { type: Number, required: true },
+    ingredients: { type: [String], required: true }
+});
+
+
+const Burger = mongoose.model("Burger", burgerSchema);
 
 const User = mongoose.model("User", userSchema);
 
 app.use(cookieParser("your-secret-key"));
 app.use(bodyParser.urlencoded({ extended: true }));
-
 app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "public")));
 
-const checkLoggedIn = ((req, res, next) => {
+// Middleware to check if the user is logged in
+const checkLoggedIn = (req, res, next) => {
     if (req.signedCookies.user) {
         return next();
     }
     res.redirect("/");
-});
+};
 
 // Middleware to check if the user has purchased
 const hasPurchased = (req, res, next) => {
@@ -43,142 +80,410 @@ const hasPurchased = (req, res, next) => {
     res.redirect("/buying");
 };
 
+// Burgers data (in-memory)
+// let burgers = [
+//     { id: 1, name: "BIGGY Burger", price: 10, description: "klassik", ingredients: ["burger", "brød"] },
+//     { id: 2, name: "CHEESY Burger", price: 12, description: "with extra cheese", ingredients: ["burger", "cheese", "brød"] }
+// ];
+
+const availableIngredients = ["lettuce", "tomato", "onion", "cheese", "bacon", "pickle", "ketchup", "mayo"];
+
 // Routes
 app.get("/", (req, res) => {
     const user = req.signedCookies.user;
-    res.render("index", { 
-        title: "Home",
-        user: user,
-        error: null
-    });
+    res.render("index", { title: "Home", user: user, error: null });
 });
+app.get("/login", (req, res) => {
+    const user = req.signedCookies.user;
+    res.render("login", {
+        title: "Login",
+        user: user
+    })
+    
+    });
 
-// Login route
 app.post("/login", async (req, res) => {
     const { username, password } = req.body;
-    
     try {
         const user = await User.findOne({ username });
-        
         if (!user) {
-            return res.render("index", { 
-                title: "Home",
-                user: null,
-                error: "User not found" 
-            });
+            return res.render("login", { title: "Login", user: null, error: "User not found" });
         }
-
         const isMatch = await bcrypt.compare(password, user.password);
-        
         if (isMatch) {
-            res.cookie("user", { username: user.username }, { 
-                signed: true,
-                httpOnly: true,
-                maxAge: 24 * 60 * 60 * 1000 // 1 day
-            });
+            res.cookie("user", { username: user.username }, { signed: true, httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
             res.redirect("/buying");
         } else {
-            res.render("index", { 
-                title: "Home",
-                user: null,
-                error: "Invalid password"
-            });
+            res.render("index", { title: "Home", user: null, error: "Invalid password" });
         }
     } catch (error) {
         console.error("Login error:", error);
-        res.render("index", { 
-            title: "Home",
-            user: null,
-            error: "Login failed"
-        });
+        res.render("index", { title: "Home", user: null, error: "Login failed" });
     }
 });
 
-// Create user route
-app.post("/create-user", async (req, res) => {
-    const { username, password } = req.body;
-    
+
+// Update existing routes to handle customization
+app.post("/customize", checkLoggedIn, async (req, res) => {
     try {
-        // Check if user already exists
-        const existingUser = await User.findOne({ username });
-        if (existingUser) {
-            return res.render("index", { 
-                title: "Home",
-                user: null,
-                error: "Username already exists" 
-            });
+        const { burgerId, ingredients } = req.body;
+
+        // Find the original burger
+        const originalBurger = await Burger.findById(burgerId);
+        if (!originalBurger) {
+            return res.status(404).send("Original burger not found");
         }
 
-        // Hash password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        // Find the current user
+        const user = await User.findOne({ username: req.signedCookies.user.username });
 
-        // Create new user
-        const newUser = new User({
-            username,
-            password: hashedPassword
+        // Calculate additional price for custom ingredients
+        const additionalPrice = ingredients.reduce((total, ingredient) => {
+            // Define a pricing logic for additional ingredients here
+            // For example, each ingredient adds $0.50
+            return total + 0.50;
+        }, 0);
+
+        // Create a new customized burger object (not saved to DB yet)
+        const customizedBurger = {
+            originalBurger: {
+                name: originalBurger.name,
+                price: originalBurger.price,
+                ingredients: originalBurger.ingredients
+            },
+            customIngredients: [],
+        };
+        
+        ingredients.forEach(ingredient => {
+            customizedBurger.customIngredients.push({
+                name: ingredient,
+                quantity: 1
+            });
         });
+        
+        customizedBurger.totalPrice = originalBurger.price + additionalPrice;
+        
 
-        await newUser.save();
-
-        // Log user in automatically
-        res.cookie("user", { username: newUser.username }, { 
+        // Save the customized burger to a signed cookie
+        res.cookie("customBurger", JSON.stringify(customizedBurger), {
             signed: true,
             httpOnly: true,
-            maxAge: 24 * 60 * 60 * 1000 // 1 day
+            maxAge: 24 * 60 * 60 * 1000
         });
 
+        // Redirect to the confirm buy page
+        res.redirect("/confirmBuy");
+    } catch (error) {
+        console.error("Error customizing burger:", error);
+        res.status(500).send("Server error");
+    }
+});
+
+app.post("/create-user", async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+            return res.render("index", { title: "Home", user: null, error: "Username already exists" });
+        }
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        const newUser = new User({ username, password: hashedPassword });
+        await newUser.save();
+        res.cookie("user", { username: newUser.username }, { signed: true, httpOnly: true, maxAge: 24 * 60 * 60 * 1000 });
         res.redirect("/buying");
     } catch (error) {
         console.error("Create user error:", error);
-        res.render("index", { 
-            title: "Home",
-            user: null,
-            error: "Failed to create user" 
+        res.render("index", { title: "Home", user: null, error: "Failed to create user" });
+    }
+});
+
+
+
+
+app.get("/createburger", checkLoggedIn, (req, res) => {
+    const user = req.signedCookies.user;
+    res.render("createBurger", { 
+        title: "Create Burger", 
+        user: user, 
+        error: null, 
+        availableIngredients: availableIngredients
+    });
+});
+app.post("/create-burger", checkLoggedIn, async (req, res) => {
+    const { name, price, ingredients } = req.body;
+
+    try {
+        const newBurger = new Burger({
+            name,
+            price: parseFloat(price),
+            ingredients: Array.isArray(ingredients) ? ingredients : [ingredients] // Handles both single and multiple selections
+        });
+
+        await newBurger.save();
+        res.redirect("/buying"); // Redirect to the buying page after saving
+    } catch (error) {
+        console.error("Error creating burger:", error);
+        res.render("createBurger", { 
+            title: "Create Burger", 
+            user: req.signedCookies.user, 
+            availableIngredients: availableIngredients, 
+            error: "Failed to create the burger. Please try again."
         });
     }
 });
 
-// Rest of your routes...
-app.get("/buying", checkLoggedIn, (req, res) => {
+
+
+
+app.get("/buying", checkLoggedIn, async (req, res) => {
     const user = req.signedCookies.user;
-    res.render("buying", { 
-        title: "Buying",
-        user: user
-    });
+
+    try {
+        const burgers = await Burger.find(); // Fetch all burgers from the database
+        res.render("buying", { 
+            title: "Buying", 
+            user: user, 
+            burgers: burgers,
+            availableIngredients: availableIngredients // Add this line
+        });
+    } catch (error) {
+        console.error("Error fetching burgers:", error);
+        res.render("buying", { 
+            title: "Buying", 
+            user: user, 
+            burgers: [], 
+            availableIngredients: [], // Add this as well
+            error: "Failed to load burgers. Please try again later." 
+        });
+    }
 });
 
-app.post("/buy", checkLoggedIn, (req, res) => {
-    res.cookie("purchase", true, { 
-        signed: true,
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000
-    });
-    res.redirect("/onWay");
+// Render Edit Page
+// Render Edit Page
+app.get("/edit/:id", checkLoggedIn, async (req, res) => {
+    try {
+        const burger = await Burger.findById(req.params.id);
+        if (!burger) {
+            return res.status(404).send("Burger not found");
+        }
+        const user = req.signedCookies.user;
+        res.render("edit", { 
+            title: "Edit Burger", 
+            burger: burger, 
+            availableIngredients: availableIngredients, 
+            user: user 
+        });
+    } catch (error) {
+        console.error("Error finding burger:", error);
+        res.status(500).send("Server error");
+    }
 });
+
+// Handle Edit Form Submission
+app.post("/edit/:id", checkLoggedIn, async (req, res) => {
+    const { ingredients } = req.body;
+    const ingredientsArray = ingredients.split(",");
+    
+    try {
+        const customBurger = req.signedCookies.customBurger;
+        // let currentBurgers = [...burgers];
+        const selectedBurger = await Burger.findById(req.params.id);
+        // const burger = await Burger.findByIdAndUpdate
+        // (req.params.id, 
+        //     { ingredients: ingredients.split(",") }, 
+        //     { new: true }
+        // );
+
+        if (!selectedBurger) {
+            return res.status(404).send("Burger not found");
+        }
+
+        const newBurger = new CustomizedBurger({
+            user: req.signedCookies.user,
+            originalBurger: selectedBurger,
+            customIngredients: ingredientsArray.map(ingredient => ({
+                name: ingredient,
+                quantity: 1
+            })),
+            totalPrice: selectedBurger.price + ingredientsArray.length * 0.50
+        });
+        console.log(selectedBurger);
+        res.render("confirmBuy", { 
+            title: "Confirm Purchase", 
+            user: req.signedCookies.user, 
+            burger: selectedBurger 
+        });
+    } catch (error) {
+        console.error("Error updating burger:", error);
+        res.status(500).send("Server error");
+    }
+});
+
+// Vist burger og bekreft kjøp
+app.get("/confirmBuy", checkLoggedIn, (req, res) => {
+    const user = req.signedCookies.user;
+    const customBurger = req.signedCookies.customBurger;
+    let currentBurgers = [...burgers];
+    
+    // Check if there's a customized burger in the cookie
+
+
+    // Hvis burgeren er redigert og lagt til i cookie, vis den
+    if (customBurger) {
+        return res.render("confirmBuy", { 
+            title: "ConfirmBuy", 
+            user: user, 
+            burger: JSON.parse(customBurger)
+        });
+    }
+    // Hvis ingen burger er redigert, vis en feilmelding eller led brukeren tilbake
+    res.redirect("/buying");
+});
+// Bekreft kjøp og omdiriger til profilen
+app.post("/confirmBuy", checkLoggedIn, async (req, res) => {
+    const customBurger = req.signedCookies.customBurger;
+
+    if (!customBurger) {
+        return res.redirect("/buying");
+    }
+    try {
+        const { burgerId, ingredients } = req.body;
+
+        // Find the original burger
+        const originalBurger = await Burger.findById(burgerId);
+        if (!originalBurger) {
+            return res.status(404).send("Original burger not found");
+        }
+
+        // Find the current user
+        const user = await User.findOne({ username: req.signedCookies.user.username });
+
+        // Calculate additional price for custom ingredients
+        const additionalPrice = ingredients.reduce((total, ingredient) => {
+            // Define a pricing logic for additional ingredients here
+            // For example, each ingredient adds $0.50
+            return total + 0.50;
+        }, 0);
+
+        // Create a new customized burger object (not saved to DB yet)
+        // const customizedBurger = {
+        //     originalBurger: {
+        //         name: originalBurger.name,
+        //         price: originalBurger.price,
+        //         ingredients: originalBurger.ingredients
+        //     },
+        //     ingredients.forEach(ingredient => {
+        //         customIngredients.push({
+        //             name: ingredient,
+        //             quantity: 1
+        //     })),
+        //     totalPrice: originalBurger.price + additionalPrice
+        // };
+
+        // Save the customized burger to a signed cookie
+        res.cookie("customBurger", JSON.stringify(customizedBurger), {
+            signed: true,
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000
+        });
+
+        // Redirect to the confirm buy page
+        res.redirect("/confirmBuy");
+    } catch (error) {
+        console.error("Error customizing burger:", error);
+        res.status(500).send("Server error");
+    }
+});
+//     try {
+//         const burgerData = JSON.parse(customBurger);
+//         const user = await User.findOne({ username: req.signedCookies.user.username });
+
+//         // Create a new CustomizedBurger document
+//         const newCustomizedBurger = new CustomizedBurger({
+//             user: user._id,
+//             originalBurger: burgerData.originalBurger._id,
+//             customIngredients: burgerData.customIngredients,
+//             totalPrice: burgerData.totalPrice
+//         });
+
+//         // Save to the database
+//         await newCustomizedBurger.save();
+
+//         // Add the customized burger to user's saved burgers
+//         user.savedBurgers.push(newCustomizedBurger._id);
+//         await user.save();
+
+//         // Clear the cookie and redirect to profile
+//         res.clearCookie("customBurger");
+//         res.redirect("/profile");
+//     } catch (error) {
+//         console.error("Error saving customized burger:", error);
+//         res.status(500).send("Server error");
+//     }
+// });
+
+
+app.post("/buy", checkLoggedIn, async (req, res) => {
+    try {
+        const selectedBurger = await Burger.findById(req.body.burgerId);
+
+        if (!selectedBurger) {
+            return res.status(404).send("Burger not found");
+        }
+
+        res.cookie("purchase", true, { 
+            signed: true, 
+            httpOnly: true, 
+            maxAge: 24 * 60 * 60 * 1000 
+        });
+
+        res.render("confirmBuy", { 
+            title: "Confirm Purchase", 
+            user: req.signedCookies.user, 
+            burger: selectedBurger 
+        });
+    } catch (error) {
+        console.error("Error finding burger:", error);
+        res.status(500).send("Server error");
+    }
+});
+
+
+app.get("/onWay", checkLoggedIn, hasPurchased, (req, res) => {
+    const user = req.signedCookies.user;
+    res.render("OnWay", { title: "On the Way", user: user });
+});
+app.get("/profile", checkLoggedIn, async (req, res) => {
+    try {
+        const user = await User.findOne({ username: req.signedCookies.user.username });
+
+        const customizedBurgers = await CustomizedBurger.find({ user: user._id })
+            .populate('originalBurger')  // This ensures originalBurger is fully populated
+            .lean();  // Convert to plain JavaScript object
+
+        console.log("Customized Burgers:", JSON.stringify(customizedBurgers, null, 2));
+
+        res.render("profile", { 
+            title: "Profile", 
+            user: user,
+            customizedBurgers: customizedBurgers
+        });
+    } catch (error) {
+        console.error("Error fetching profile:", error);
+        res.status(500).send("Server error");
+    }
+});
+
 
 app.post("/logout", (req, res) => {
     res.clearCookie("user");
     res.clearCookie("purchase");
+    res.clearCookie("customBurger");
     res.redirect("/");
 });
 
-app.get("/onWay", checkLoggedIn, hasPurchased, (req, res) => {
-    const user = req.signedCookies.user;
-    res.render("OnWay", { 
-        title: "On the Way",
-        user: user
-    });
-});
-
-app.get("/profile", checkLoggedIn, (req, res) => {
-    const user = req.signedCookies.user;
-    res.render("profile", { 
-        title: "Profile",
-        user: user
-    });
-});
-
+// Start server
 app.listen(5000, () => {
     console.log("Server started on port 5000");
 });

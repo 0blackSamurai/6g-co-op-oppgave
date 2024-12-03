@@ -1,8 +1,37 @@
 <%- include("./partials/header") %>
 <body>
     <%- include("./partials/navbar") %>
-    <form action="/logout" method="POST"> <!-- Added method="POST" -->
-        <button type="submit">Log Out</button>
+    <h1>Welcome, <%= user.username %>!</h1>
+    <form action="/logout" method="POST" class="mb-6">
+        <button 
+            type="submit" 
+            class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
+        >
+            Logout
+        </button>
     </form>
+    <h2>Your Saved Burgers:</h2>
+    <% if (customizedBurgers.length > 0) { %>
+        <% customizedBurgers.forEach(burger => { %>
+            <div class="burger-box">
+                <h3><%= burger.originalBurger.name %></h3>
+                <p>Price: $<%= burger.totalPrice %></p>
+                <h4>Original Ingredients:</h4>
+                <ul>
+                    <% burger.originalBurger.ingredients.forEach(ingredient => { %>
+                        <li><%= ingredient %></li>
+                    <% }) %>
+                </ul>
+                <h4>Custom Ingredients:</h4>
+                <ul>
+                    <% burger.customIngredients.forEach(ingredient => { %>
+                        <li><%= ingredient.name %></li>
+                    <% }) %>
+                </ul>
+            </div>
+        <% }) %>
+    <% } else { %>
+        <p>You have no saved burgers yet.</p>
+    <% } %>
 </body>
 </html>

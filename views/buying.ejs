@@ -2,8 +2,44 @@
 <body>
     <%- include("./partials/navbar") %>
     <h1>Buying Page</h1>
-    <form action="/buy" method="POST">
-        <button type="submit">Buy</button>
-    </form>
+    
+    <div id="content">
+        <% burgers.forEach(burger => { %>
+            <div class="burger-box" style="border: 1px solid #ddd; padding: 10px; margin: 10px; border-radius: 5px;">
+                <h2><%= burger.name %></h2>
+                <p>Price: $<%= burger.price %></p>
+                <h4>Ingredients</h4>
+                <ul>
+                    <% burger.ingredients.forEach(ingredient => { %>
+                        <li><%= ingredient %></li>
+                    <% }) %>
+                </ul>
+                
+                <!-- Buy Button -->
+                <form action="/buy" method="POST">
+                    <input type="hidden" name="burgerId" value="<%= burger._id %>">
+                    <button type="submit">Buy</button>
+                </form>
+                
+                <!-- Customize Button -->
+                
+            </div>
+        <% }) %>
+    </div>
 </body>
 </html>
+<!-- 
+javascript
+    const userSchema = new mongoose.Schema({
+        username: { type: String, required: true, unique: true },
+        password: { type: String, required: true },
+        savedBurgers: [{ 
+            type: mongoose.Schema.Types.ObjectId, 
+            refPath: 'burgerModel' 
+        }],
+        burgerModel: {
+            type: String,
+            enum: ['Burger', 'CustomizedBurger']
+        }
+    }); -->
+

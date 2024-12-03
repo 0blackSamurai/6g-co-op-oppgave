@@ -1,0 +1,74 @@
+<%- include("./partials/header") %>
+<body>
+    <%- include("./partials/navbar") %>
+
+    <h1>Edit <%= burger.name %></h1>
+
+    <h2>Current Ingredients:</h2>
+    <div id="current-ingredients">
+        <% burger.ingredients.forEach((ingredient, index) => { %>
+            <button class="remove-ingredient" data-index="<%= index %>"><%= ingredient %> ❌</button>
+        <% }); %>
+    </div>
+
+    <h2>Add Ingredients:</h2>
+    <div id="add-ingredients">
+        <% availableIngredients.forEach(availableIngredient => { %>
+            <% if (!burger.ingredients.includes(availableIngredient)) { %>
+                <button class="add-ingredient" data-ingredient="<%= availableIngredient %>">
+                    <%= availableIngredient %> ➕
+                </button>
+            <% } %>
+        <% }); %>
+    </div>
+
+    <form id="save-form" action="/edit/<%= burger.id %>" method="POST">
+        <input type="hidden" name="ingredients" id="ingredients-input" value="<%= burger.ingredients.join(',') %>">
+        <button type="submit">Save and Confirm</button>
+    </form>
+
+    <script>
+        const currentIngredientsDiv = document.getElementById('current-ingredients');
+        const addIngredientsDiv = document.getElementById('add-ingredients');
+        const ingredientsInput = document.getElementById('ingredients-input');
+
+        let ingredients = ingredientsInput.value ? ingredientsInput.value.split(',') : [];
+
+        currentIngredientsDiv.addEventListener('click', (event) => {
+            if (event.target.classList.contains('remove-ingredient')) {
+                const index = event.target.dataset.index;
+                ingredients.splice(index, 1);
+                updateUI();
+            }
+        });
+
+        addIngredientsDiv.addEventListener('click', (event) => {
+            if (event.target.classList.contains('add-ingredient')) {
+                const ingredient = event.target.dataset.ingredient;
+                ingredients.push(ingredient);
+                updateUI();
+            }
+        });
+
+        function updateUI() {
+            ingredientsInput.value = ingredients.join(',');
+
+            currentIngredientsDiv.innerHTML = '';
+            ingredients.forEach((ingredient, index) => {
+                currentIngredientsDiv.innerHTML += `<button class="remove-ingredient" data-index="${index}">
+                    ${ingredient} ❌
+                </button>`;
+            });
+
+            addIngredientsDiv.innerHTML = '';
+            <% availableIngredients.forEach(availableIngredient => { %>
+                if (!ingredients.includes('<%= availableIngredient %>')) {
+                    addIngredientsDiv.innerHTML += `<button class="add-ingredient" data-ingredient="<%= availableIngredient %>">
+                        <%= availableIngredient %> ➕
+                    </button>`;
+                }
+            <% }); %>
+        }
+    </script>
+</body>
+</html>

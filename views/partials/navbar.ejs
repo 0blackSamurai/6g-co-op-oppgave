@@ -1,5 +1,7 @@
 <a href="/">home</a>
 <a href="/buying">menu</a>
-<a href="/profile">profile</a>
-
-<a href="/OnWay">OnWay</a>
+<% if (user){ %>
+    <a href="/profile">profile</a>
+   <%} else{ %>
+        <a href="/login">Logg inn</a>
+   <%}%>
