@@ -19,7 +19,8 @@
             <button>Edit</button>
         </form>
 
-        <form action="/confirmBuy" method="POST">
+        <form action="/donebuy" method="POST">
+            <input type="hidden" name="burgerId" value="<%= burger._id %>">
             <button type="submit">Confirm Buy</button>
         </form>
     </div>

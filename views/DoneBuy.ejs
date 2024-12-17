@@ -1,0 +1,66 @@
+<%- include("./partials/header") %>
+<body>
+    <%- include("./partials/navbar") %>
+    <form id="paymentForm" action="/finishbuy" method="POST">
+        <h1>Fill in your details</h1>
+
+        <!-- Location (Address) -->
+        
+        <!-- Card Number -->
+        <label for="cardNumber">Card Number:</label>
+        <input type="text" id="cardNumber" name="cardNumber" required pattern="\d{16}" placeholder="16-digit card number">
+
+        <!-- Card Expiry -->
+        <label for="cardExpiry">Card Expiry (MM/YY):</label>
+        <input type="text" id="cardExpiry" name="cardExpiry" required pattern="\d{2}/\d{2}" placeholder="MM/YY">
+
+        <!-- Card CVV -->
+        <label for="cardCVV">Card CVV:</label>
+        <input type="text" id="cardCVV" name="cardCVV" required pattern="\d{3}" placeholder="3-digit CVV">
+
+        <!-- Phone Number -->
+        <label for="phoneNumber">Phone Number:</label>
+        <input type="text" id="phoneNumber" name="phoneNumber" required pattern="\d{10}" placeholder="10-digit phone number">
+
+        <!-- Email Address (Optional) -->
+        <label for="email">Email Address:</label>
+        <input type="email" id="email" name="email" placeholder="Email address">
+
+        <!-- Address Details -->
+        <label for="houseNumber">House Number:</label>
+        <input type="text" id="houseNumber" name="houseNumber" required>
+
+        <label for="street">Street:</label>
+        <input type="text" id="street" name="street" required>
+
+        <label for="city">City:</label>
+        <input type="text" id="city" name="city" required>
+
+        <label for="postalCode">Postal Code:</label>
+        <input type="text" id="postalCode" name="postalCode" required>
+
+        <!-- Order Details -->
+        <!-- Payment Method -->
+        <label for="paymentMethod">Payment Method:</label>
+        <select id="paymentMethod" name="paymentMethod" required>
+            <option value="card">Card</option>
+            <option value="cash">Cash</option>
+            <option value="applePay">Apple Pay</option>
+            <option value="paypal">PayPal</option>
+        </select>
+
+        <!-- Amount -->
+        <p>Price: $<%= burger.price %></p>
+
+        <button type="submit">Submit</button>
+    </form>
+    
+    <script>
+        document.getElementById('paymentForm').addEventListener('submit', function(event) {
+      
+          
+        });
+    </script>
+      
+</body>
+</html>

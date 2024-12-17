@@ -2,6 +2,31 @@
 <body>
     <script src="/app.js"></script>
     <%- include("./partials/navbar") %>
-    <h1>h</h1>
+    <main>
+        <h1>Your Burger is On Its Way!</h1>
+        <p id="status">Preparing your delivery...</p>
+        <p id="time"></p>
+    </main>
+
+    <script>
+        // Function to fetch delivery status
+        async function updateStatus() {
+            try {
+                const response = await fetch('/track-status');
+                const data = await response.json();
+                if (data.status) {
+                    document.getElementById('status').innerText = data.status;
+                }
+                if (data.remainingTime) {
+                    document.getElementById('time').innerText = `Estimated delivery: ${data.remainingTime} minutes`;
+                }
+            } catch (error) {
+                console.error("Error updating status:", error);
+            }
+        }
+
+        // Periodically fetch status every 5 seconds
+        setInterval(updateStatus, 5000);
+    </script>
 </body>
 </html>

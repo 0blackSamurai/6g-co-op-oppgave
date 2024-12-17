@@ -20,6 +20,29 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     savedBurgers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Burger' }] 
 });
+const transactionSchema = new mongoose.Schema({
+    user: { type: String, required: true },   // Username of the user making the purchase
+    cardNumber: { type: String, required: true }, // Card number (for demo purposes, it should be 16 digits)
+    cardExpiry: { type: String },               // Card expiry date (if needed)
+    cardCVV: { type: String },                  // CVV (3-digit number)
+    phoneNumber: { type: String, required: true }, // User's phone number
+    email: { type: String },                    // User's email address (optional)
+    address: {                                  // Delivery address (required for delivery)
+        houseNumber: { type: String, required: true },
+        street: { type: String, required: true },
+        city: { type: String, required: true },
+        postalCode: { type: String, required: true }
+    },
+    paymentMethod: {                             // Payment method (e.g., card, cash)
+        type: String,
+        required: true,
+        enum: ['card', 'cash', 'applePay', 'paypal'] // Possible payment methods
+    },
+    createdAt: { type: Date, default: Date.now } // Timestamp of the transaction
+});
+
+const Transaction = mongoose.model("Transaction", transactionSchema);
+
 const customizedBurgerSchema = new mongoose.Schema({
     user: { 
         type: mongoose.Schema.Types.ObjectId, 
@@ -35,10 +58,6 @@ const customizedBurgerSchema = new mongoose.Schema({
         name: { type: String, required: true },
         quantity: { type: Number, default: 1 }
     }],
-    totalPrice: { 
-        type: Number, 
-        required: true 
-    },
     createdAt: { 
         type: Date, 
         default: Date.now 
@@ -101,6 +120,13 @@ app.get("/login", (req, res) => {
     })
     
     });
+app.get("/register", (req, res) => {
+    const user = req.signedCookies.user;
+    res.render("register", {
+        title: "Register",
+        user: user
+    })
+});
 
 app.post("/login", async (req, res) => {
     const { username, password } = req.body;
@@ -134,22 +160,11 @@ app.post("/customize", checkLoggedIn, async (req, res) => {
             return res.status(404).send("Original burger not found");
         }
 
-        // Find the current user
-        const user = await User.findOne({ username: req.signedCookies.user.username });
-
-        // Calculate additional price for custom ingredients
-        const additionalPrice = ingredients.reduce((total, ingredient) => {
-            // Define a pricing logic for additional ingredients here
-            // For example, each ingredient adds $0.50
-            return total + 0.50;
-        }, 0);
-
-        // Create a new customized burger object (not saved to DB yet)
+        // Create a new customized burger object (no price calculation)
         const customizedBurger = {
             originalBurger: {
                 name: originalBurger.name,
-                price: originalBurger.price,
-                ingredients: originalBurger.ingredients
+                ingredients: originalBurger.ingredients,
             },
             customIngredients: [],
         };
@@ -161,9 +176,6 @@ app.post("/customize", checkLoggedIn, async (req, res) => {
             });
         });
         
-        customizedBurger.totalPrice = originalBurger.price + additionalPrice;
-        
-
         // Save the customized burger to a signed cookie
         res.cookie("customBurger", JSON.stringify(customizedBurger), {
             signed: true,
@@ -178,6 +190,7 @@ app.post("/customize", checkLoggedIn, async (req, res) => {
         res.status(500).send("Server error");
     }
 });
+
 
 app.post("/create-user", async (req, res) => {
     const { username, password } = req.body;
@@ -286,14 +299,7 @@ app.post("/edit/:id", checkLoggedIn, async (req, res) => {
     const ingredientsArray = ingredients.split(",");
     
     try {
-        const customBurger = req.signedCookies.customBurger;
-        // let currentBurgers = [...burgers];
         const selectedBurger = await Burger.findById(req.params.id);
-        // const burger = await Burger.findByIdAndUpdate
-        // (req.params.id, 
-        //     { ingredients: ingredients.split(",") }, 
-        //     { new: true }
-        // );
 
         if (!selectedBurger) {
             return res.status(404).send("Burger not found");
@@ -306,9 +312,8 @@ app.post("/edit/:id", checkLoggedIn, async (req, res) => {
                 name: ingredient,
                 quantity: 1
             })),
-            totalPrice: selectedBurger.price + ingredientsArray.length * 0.50
         });
-        console.log(selectedBurger);
+
         res.render("confirmBuy", { 
             title: "Confirm Purchase", 
             user: req.signedCookies.user, 
@@ -320,26 +325,6 @@ app.post("/edit/:id", checkLoggedIn, async (req, res) => {
     }
 });
 
-// Vist burger og bekreft kjøp
-app.get("/confirmBuy", checkLoggedIn, (req, res) => {
-    const user = req.signedCookies.user;
-    const customBurger = req.signedCookies.customBurger;
-    let currentBurgers = [...burgers];
-    
-    // Check if there's a customized burger in the cookie
-
-
-    // Hvis burgeren er redigert og lagt til i cookie, vis den
-    if (customBurger) {
-        return res.render("confirmBuy", { 
-            title: "ConfirmBuy", 
-            user: user, 
-            burger: JSON.parse(customBurger)
-        });
-    }
-    // Hvis ingen burger er redigert, vis en feilmelding eller led brukeren tilbake
-    res.redirect("/buying");
-});
 // Bekreft kjøp og omdiriger til profilen
 app.post("/confirmBuy", checkLoggedIn, async (req, res) => {
     const customBurger = req.signedCookies.customBurger;
@@ -382,6 +367,9 @@ app.post("/confirmBuy", checkLoggedIn, async (req, res) => {
         // };
 
         // Save the customized burger to a signed cookie
+
+        
+        
         res.cookie("customBurger", JSON.stringify(customizedBurger), {
             signed: true,
             httpOnly: true,
@@ -393,6 +381,86 @@ app.post("/confirmBuy", checkLoggedIn, async (req, res) => {
     } catch (error) {
         console.error("Error customizing burger:", error);
         res.status(500).send("Server error");
+    }
+});
+app.post("/donebuy", checkLoggedIn, async (req, res) => {
+    const user = req.signedCookies.user;
+    const selectedBurger = await Burger.findById(req.body.burgerId);
+
+    
+    console.log(selectedBurger, "donebuy");
+    res.render("Donebuy", { 
+        title: "Donebuy", 
+        user: req.signedCookies.user, 
+        burger: selectedBurger 
+    });
+     
+});
+    
+app.post("/finishbuy", checkLoggedIn, async (req, res) => {
+    const { location, cardNumber, cardExpiry, cardCVV, phoneNumber, email, houseNumber, street, city, postalCode, orderDetails, paymentMethod } = req.body;
+    // console(transaction);
+    // Basic validatio
+
+    // Card number validation (16 digits)
+    if (!/^\d{16}$/.test(cardNumber)) {
+        return res.status(400).send("Invalid card number. Please ensure it is 16 digits.");
+    }
+
+    // Card CVV validation (3 digits)
+    if (!/^\d{3}$/.test(cardCVV)) {
+        return res.status(400).send("Invalid CVV. Please ensure it is a 3-digit number.");
+    }
+
+    // Phone number validation (basic check for 10 digits)
+    if (!/^\d{10}$/.test(phoneNumber)) {
+        return res.status(400).send("Invalid phone number. Please ensure it is 10 digits.");
+    }
+
+    try {
+        // Save transaction to MongoDB
+        const transaction = new Transaction({
+            user: req.signedCookies.user.username,  // Username from signed cookies
+            location,                               // Location (if delivery)
+            cardNumber,                             // Card number (for demo purposes)
+            cardExpiry,                             // Card expiry date
+            cardCVV,                                // Card CVV
+            phoneNumber,                            // User's phone number
+            email,                                  // User's email address (optional)
+            address: {
+                houseNumber,                        // User's house number
+                street,                             // Street name
+                city,                               // City
+                postalCode                          // Postal code
+            },
+            orderDetails,                           // Order details (what user ordered)
+            paymentMethod,   
+                      // Payment method                               // Transaction amount
+        });
+        await transaction.save();
+        console.log(transaction, "transaction");
+
+        // Redirect to the "DoneBuy" page
+        res.render("finishbuy", { 
+            title: "finishbuy", 
+            user: req.signedCookies.user, 
+        });
+    } catch (error) {
+        console.error("Error saving transaction:", error);
+        res.status(500).send("An error occurred while processing the payment.");
+    }
+});
+
+
+app.get("/Donebuy", checkLoggedIn, async (req, res) => {
+    const user = req.signedCookies.user;
+    const customBurger = req.signedCookies.customBurger;
+
+    if (!customBurger) {
+        return res.redirect("/buying");
+    }
+    else {
+        res.render("Donebuy", { title: "DoneBuy", user: user }); 
     }
 });
 //     try {
@@ -425,9 +493,10 @@ app.post("/confirmBuy", checkLoggedIn, async (req, res) => {
 
 
 app.post("/buy", checkLoggedIn, async (req, res) => {
+    console.log(req.body.burgerId, "burgerid");
     try {
         const selectedBurger = await Burger.findById(req.body.burgerId);
-
+        console.log(selectedBurger, "selectedburger");
         if (!selectedBurger) {
             return res.status(404).send("Burger not found");
         }
