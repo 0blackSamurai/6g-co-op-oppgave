@@ -1,0 +1,213 @@
+.registration-form p {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #666;
+}
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* Aligns items like logo and nav-links vertically */
+    padding: 10px 20px; /* Adjust spacing around the header */
+    background-color: rgb(255, 255, 255);
+    position: fixed; /* Makes the header stick to the top of the page */
+    top: 0; /* Aligns the header to the top */
+    width: 100%; /* Ensures the header spans the full width of the page */
+    z-index: 1000; /* Keeps it above other elements */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional shadow for a modern look */
+}
+
+/* header .logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #ff0050;
+} */
+header .nav-buttons a {
+    text-decoration: none;
+    color: #000;
+    font-size: 16px;
+    margin-left: 20px;
+    font-weight: bold;
+}
+ 
+.registration-form a {
+    color: #e60023;
+    text-decoration: none;
+}
+ 
+.registration-form a:hover {
+    text-decoration: underline;
+}
+.center {
+    display: flex;
+    align-items: center;
+    margin: 0%;
+    padding: 0%;
+    height: 30px;
+    justify-content: center;
+}
+ 
+/* body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    /* justify-content: center; */
+    /* align-items: center; */
+    /* height: 100vh; */
+    /* background-color: #f9f9f9;
+} */
+  
+main {
+    /* text-align: center; */
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    max-width: 400px;
+}
+ 
+h1 {
+    font-size: 24px;
+    color: #333;
+}
+ 
+p {
+    margin: 10px 0 20px;
+    color: #666;
+}
+ 
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+ 
+.form-group {
+    text-align: left;
+}
+ 
+label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #333;
+}
+ 
+input {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+ 
+button {
+    padding: 10px;
+    font-size: 16px;
+    color: white;
+    background-color: #e60023;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+ 
+button:hover {
+    background-color: #c4001e;
+}
+ 
+.error {
+    color: red;
+    font-size: 14px;
+}
+ 
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #fff;
+}
+ 
+.login-form {
+    text-align: center;
+    width: 100%;
+    max-width: 360px;
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+ 
+.login-form h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #333;
+}
+ 
+.login-form .form-group {
+    margin-bottom: 15px;
+    text-align: left;
+}
+ 
+.login-form label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #666;
+}
+ 
+.login-form input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+ 
+.login-form input:focus {
+    outline: none;
+    border-color: #e60023;
+    box-shadow: 0 0 5px rgba(230, 0, 35, 0.3);
+}
+ 
+.login-form a {
+    color: #e60023;
+    text-decoration: none;
+    font-size: 14px;
+}
+ 
+.login-form a:hover {
+    text-decoration: underline;
+}
+ 
+.login-form button {
+    width: 100%;
+    padding: 10px;
+    background-color: #e60023;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+ 
+.login-form button:hover {
+    background-color: #d0001f;
+}
+ 
+hr {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 20px 0;
+}
+ 
+.error {
+    color: #e60023;
+    font-size: 14px;
+    margin-top: -10px;
+    margin-bottom: 10px;
+}
+ 

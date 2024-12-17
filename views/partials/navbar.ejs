@@ -1,7 +1,13 @@
-<a href="/">home</a>
-<a href="/buying">menu</a>
-<% if (user){ %>
-    <a href="/profile">profile</a>
-   <%} else{ %>
-        <a href="/login">Logg inn</a>
-   <%}%>
+<header>
+     <div class="nav-buttons">
+               <a href="/">home</a>
+               <a href="/buying">menu</a>
+               <% if (user){ %>
+                   <a href="/profile">profile</a>
+                  <%} else{ %>
+                       <a href="/login">Logg inn</a>
+                       <a href="/register">register</a>
+                       <%}%>
+             
+          </div>
+      </header>
