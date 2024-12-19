@@ -1,0 +1,54 @@
+<body>
+    <h1>Welcome, <%= user.username %>!</h1>
+    <h2>Edit Transaction</h2>
+
+    <form action="/UpdateTransactions/<%= transaction._id %>" method="POST">
+        <fieldset>
+            <legend>Address</legend>
+            <label for="houseNumber">House Number:</label>
+            <input type="text" id="houseNumber" name="houseNumber" value="<%= transaction.address.houseNumber %>" required><br>
+
+            <label for="street">Street:</label>
+            <input type="text" id="street" name="street" value="<%= transaction.address.street %>" required><br>
+
+            <label for="city">City:</label>
+            <input type="text" id="city" name="city" value="<%= transaction.address.city %>" required><br>
+
+            <label for="postalCode">Postal Code:</label>
+            <input type="text" id="postalCode" name="postalCode" value="<%= transaction.address.postalCode %>" required><br>
+        </fieldset>
+
+        <fieldset>
+            <legend>Payment Details</legend>
+            <label for="cardNumber">Card Number:</label>
+            <input type="text" id="cardNumber" name="cardNumber" value="<%= transaction.cardNumber %>" required><br>
+
+            <label for="cardExpiry">Card Expiry Date:</label>
+            <input type="text" id="cardExpiry" name="cardExpiry" value="<%= transaction.cardExpiry %>" required><br>
+
+            <label for="cardCVV">Card CVV:</label>
+            <input type="text" id="cardCVV" name="cardCVV" value="<%= transaction.cardCVV %>" required><br>
+
+            <label for="paymentMethod">Payment Method:</label>
+            <select id="paymentMethod" name="paymentMethod" required>
+                <option value="card" <%= transaction.paymentMethod === 'card' ? 'selected' : '' %>>Card</option>
+                <option value="cash" <%= transaction.paymentMethod === 'cash' ? 'selected' : '' %>>Cash</option>
+                <option value="applePay" <%= transaction.paymentMethod === 'applePay' ? 'selected' : '' %>>Apple Pay</option>
+                <option value="paypal" <%= transaction.paymentMethod === 'paypal' ? 'selected' : '' %>>PayPal</option>
+            </select>
+        </fieldset>
+
+        <fieldset>
+            <legend>User Details</legend>
+            <label for="phoneNumber">Phone Number:</label>
+            <input type="text" id="phoneNumber" name="phoneNumber" value="<%= transaction.phoneNumber %>" required><br>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" value="<%= transaction.email %>"><br>
+        </fieldset>
+
+        <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
+            Save Changes
+        </button>
+    </form>
+</body>

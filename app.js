@@ -127,6 +127,72 @@ app.get("/register", (req, res) => {
         user: user
     })
 });
+// Route to handle editing a transaction by its ID
+app.get("/TransactionsEdit/:id", checkLoggedIn, async (req, res) => {
+    try {
+        const transactionId = req.params.id; // Get the transaction ID from the URL params
+        const user = await User.findOne({ username: req.signedCookies.user.username });
+        
+        // Fetch the specific transaction using the ID
+        const transaction = await Transaction.findById(transactionId).lean(); 
+
+        if (!transaction) {
+            return res.status(404).send("Transaction not found");
+        }
+
+        // Render the edit page with the transaction data
+        res.render("TransactionsEdit", {
+            title: "Edit Transaction",
+            user: user,
+            transaction: transaction, // Pass the single transaction
+        });
+    } catch (error) {
+        console.error("Error fetching transaction:", error);
+        res.status(500).send("Server error");
+    }
+});
+
+
+app.post("/editTransaction/:id", checkLoggedIn, async (req, res) => {
+    try {
+        // Get the updated data from the form submission
+        const { cardNumber, cardExpiry, cardCVV, phoneNumber, email, houseNumber, street, city, postalCode, paymentMethod } = req.body;
+
+        // Find the transaction by its ID
+        const transaction = await Transaction.findById(req.params.id);
+        
+        if (!transaction) {
+            return res.status(404).send("Transaction not found");
+        }
+
+        // Ensure the user is the owner of the transaction
+        if (transaction.user !== req.signedCookies.user.username) {
+            return res.status(403).send("You are not authorized to edit this transaction");
+        }
+
+        // Update the transaction fields
+        transaction.cardNumber = cardNumber || transaction.cardNumber;
+        transaction.cardExpiry = cardExpiry || transaction.cardExpiry;
+        transaction.cardCVV = cardCVV || transaction.cardCVV;
+        transaction.phoneNumber = phoneNumber || transaction.phoneNumber;
+        transaction.email = email || transaction.email;
+        transaction.address.houseNumber = houseNumber || transaction.address.houseNumber;
+        transaction.address.street = street || transaction.address.street;
+        transaction.address.city = city || transaction.address.city;
+        transaction.address.postalCode = postalCode || transaction.address.postalCode;
+        transaction.paymentMethod = paymentMethod || transaction.paymentMethod;
+
+        // Save the updated transaction
+        await transaction.save();
+
+        // Redirect to the profile or a confirmation page
+        res.redirect("/profile");
+    } catch (error) {
+        console.error("Error updating transaction:", error);
+        res.status(500).send("Error updating transaction");
+    }
+});
+
 
 app.post("/login", async (req, res) => {
     const { username, password } = req.body;
@@ -438,7 +504,7 @@ app.post("/finishbuy", checkLoggedIn, async (req, res) => {
                       // Payment method                               // Transaction amount
         });
         await transaction.save();
-        console.log(transaction, "transaction");
+        // console.log(transaction, "transaction");
 
         // Redirect to the "DoneBuy" page
         res.render("finishbuy", { 
@@ -528,18 +594,45 @@ app.get("/profile", checkLoggedIn, async (req, res) => {
         const user = await User.findOne({ username: req.signedCookies.user.username });
 
         const customizedBurgers = await CustomizedBurger.find({ user: user._id })
-            .populate('originalBurger')  // This ensures originalBurger is fully populated
+            .populate('originalBurger')  // Populate original burger details
             .lean();  // Convert to plain JavaScript object
 
+        const transactions = await Transaction.find({ user: user.username }).lean(); // Fetch user's transactions
+
         console.log("Customized Burgers:", JSON.stringify(customizedBurgers, null, 2));
+        console.log("Transactions:", JSON.stringify(transactions, null, 2));
 
         res.render("profile", { 
             title: "Profile", 
             user: user,
-            customizedBurgers: customizedBurgers
+            customizedBurgers: customizedBurgers,
+            transactions: transactions // Pass transactions to the profile page
         });
     } catch (error) {
         console.error("Error fetching profile:", error);
+        res.status(500).send("Server error");
+    }
+});
+app.post("/Testing1", checkLoggedIn, async (req, res) => {
+    try {
+        const transaction = await Transaction.findById(req.params.id);
+
+        if (!transaction) {
+            return res.status(404).send("Transaction not found");
+        }
+
+        // Ensure only the owner of the transaction can edit it
+        if (transaction.user !== req.signedCookies.user.username) {
+            return res.status(403).send("You are not authorized to edit this transaction");
+        }
+
+        res.render("TransactionsEdit", { 
+            title: " TransactionsEdit", 
+            user: req.signedCookies.user,
+            transaction: transaction 
+        });
+    } catch (error) {
+        console.error("Error fetching transaction:", error);
         res.status(500).send("Server error");
     }
 });

@@ -1,34 +1,58 @@
 <%- include("./partials/header") %>
 <body>
     <%- include("./partials/navbar") %>
-    <div  class="header">
-
+    <div  class="top">
+        
         <h1>Welcome, <%= user.username %>!</h1>
     </div>
 </form>
+<form action="/logout" method="POST" class="mb-6">
+<button 
+    type="submit" 
+    class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
+>
+    Logout
+</button>
+</form>
 <h2>Your recently bought Burgers:</h2>
 <% if (customizedBurgers.length > 0) { %>
-        <% customizedBurgers.forEach(burger => { %>
-            <div class="burger-box">
-                <h3><%= burger.originalBurger.name %></h3>
-                <p>Price: $<%= burger.totalPrice %></p>
-                <h4>Your ingredients:</h4>
-                <ul>
-                    <% burger.customIngredients.forEach(ingredient => { %>
-                        <li><%= ingredient.name %></li>
+    <% customizedBurgers.forEach(burger => { %>
+        <div class="burger-box">
+            <h3><%= burger.originalBurger.name %></h3>
+            <p>Price: $<%= burger.totalPrice %></p>
+            <h4>Your ingredients:</h4>
+            <ul>
+                <% burger.customIngredients.forEach(ingredient => { %>
+                    <li><%= ingredient.name %></li>
                     <% }) %>
                 </ul>
             </div>
-        <% }) %>
-        <% } else { %>
-            <p>You have no saved burgers yet.</p>
-    <% } %>
-    <form action="/logout" method="POST" class="mb-6">
-        <button 
-            type="submit" 
-            class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
-        >
-            Logout
-        </button>
+            <% }) %>
+            <% } else { %>
+                <p>You have no saved burgers yet.</p>
+                <% } %>
+                
+                <h2>Your Transactions</h2>
+
+                <div class="transaction-box">
+                    <h3>Transactions Info</h3>
+                    <% if (transactions && transactions.length > 0) { %>
+                        <% transactions.forEach(transaction => { %>
+                            <div class="transaction-item">
+                                <p><strong>Address:</strong> <%= transaction.cardNumber %> <%= transaction.address.houseNumber %>, <%= transaction.address.street %>, <%= transaction.address.city %>, <%= transaction.address.postalCode %></p>
+                            </div>
+                            <form action="/TransactionsEdit/<%= transaction._id %>" method="GET">
+                                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                                    Edit
+                                </button>
+                            </form>
+                        <% }) %>
+                        <!-- Edit button for all transactions -->
+                        
+                    <% } else { %>
+                        <p>No transactions found.</p>
+                    <% } %>
+                </div>
+                <!-- </ul> -->
 </body>
 </html>

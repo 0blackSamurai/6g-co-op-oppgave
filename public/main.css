@@ -3,7 +3,7 @@
     font-size: 14px;
     color: #666;
 }
-header {
+.navbar {
     display: flex;
     justify-content: space-between;
     align-items: center; /* Aligns items like logo and nav-links vertically */
@@ -21,7 +21,7 @@ header {
     font-weight: bold;
     color: #ff0050;
 } */
-header .nav-buttons a {
+.navbar .nav-buttons a {
     text-decoration: none;
     color: #000;
     font-size: 16px;
