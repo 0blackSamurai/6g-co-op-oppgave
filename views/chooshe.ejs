@@ -1,0 +1,40 @@
+<%- include("./partials/header") %>
+<body>
+    <%- include("./partials/navbar") %>
+    <% if (transactions && transactions.length > 0) { %>
+        <% transactions.forEach(transaction => { %>
+            <div class="transaction-box">
+
+                <div class="transaction-item">
+                    <p><strong>Address:</strong> <%= transaction.cardNumber %> <%= transaction.address.houseNumber %>, <%= transaction.address.street %>, <%= transaction.address.city %>, <%= transaction.address.postalCode %></p>
+                </div>
+                <form action="/TransactionsEdit/<%= transaction._id %>" method="GET">
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                        Edit
+                    </button>
+                </form>
+                <form action="/finishbuy" method="POST">
+                    <input type="hidden" name="cardNumber" value="<%= transaction.cardNumber %>">
+                    <input type="hidden" name="cardExpiry" value="<%= transaction.cardExpiry %>">
+                    <input type="hidden" name="cardCVV" value="<%= transaction.cardCVV %>">
+                    <input type="hidden" name="phoneNumber" value="<%= transaction.phoneNumber %>">
+                    <input type="hidden" name="email" value="<%= transaction.email %>">
+                    <input type="hidden" name="houseNumber" value="<%= transaction.address.houseNumber %>">
+                    <input type="hidden" name="street" value="<%= transaction.address.street %>">
+                    <input type="hidden" name="city" value="<%= transaction.address.city %>">
+                    <input type="hidden" name="postalCode" value="<%= transaction.address.postalCode %>">
+                    <input type="hidden" name="paymentMethod" value="card">
+                    <input type="hidden" name="orderDetails" value="<%= burger.name %>">
+                    <button type="submit">Select</button>
+                </form>
+                
+            </div>
+                <% }) %>
+            <% } %>
+            <form action="/donebuy" method="POST">
+                <input type="hidden" name="burgerId" value="<%= burger._id %>">
+                <button type="submit">create new transaction</button>
+            </form>
+
+</body>
+</html>

@@ -3,7 +3,6 @@
     <%- include("./partials/navbar") %>
 
     <h1>Confirm Your Buy</h1>
-    <h1>testing if</h1>
     <div class="burger-box">
         <h2><%= burger.name %></h2>
         <p>Price: $<%= burger.price %></p>
@@ -19,7 +18,7 @@
             <button>Edit</button>
         </form>
 
-        <form action="/donebuy" method="POST">
+        <form action="/chooshe" method="Post">
             <input type="hidden" name="burgerId" value="<%= burger._id %>">
             <button type="submit">Confirm Buy</button>
         </form>
