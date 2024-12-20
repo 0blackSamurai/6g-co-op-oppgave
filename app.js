@@ -192,6 +192,36 @@ app.post("/editTransaction/:id", checkLoggedIn, async (req, res) => {
         res.status(500).send("Error updating transaction");
     }
 });
+app.post("/UpdateTransactions/:id", checkLoggedIn, async (req, res) => {
+    try {
+        const transactionId = req.params.id;
+        const updates = {
+            "address.houseNumber": req.body.houseNumber,
+            "address.street": req.body.street,
+            "address.city": req.body.city,
+            "address.postalCode": req.body.postalCode,
+            cardNumber: req.body.cardNumber,
+            cardExpiry: req.body.cardExpiry,
+            cardCVV: req.body.cardCVV,
+            paymentMethod: req.body.paymentMethod,
+            phoneNumber: req.body.phoneNumber,
+            email: req.body.email,
+        };
+
+        // Update the transaction in the database
+        const transaction = await Transaction.findByIdAndUpdate(transactionId, updates, { new: true });
+
+        if (!transaction) {
+            return res.status(404).send("Transaction not found");
+        }
+
+        // Redirect or respond after successful update
+        res.redirect("/Profile"); // Or send a success message: res.status(200).json({ success: true });
+    } catch (error) {
+        console.error("Error updating transaction:", error);
+        res.status(500).send("Server error");
+    }
+});
 
 
 app.post("/login", async (req, res) => {
@@ -449,36 +479,76 @@ app.post("/confirmBuy", checkLoggedIn, async (req, res) => {
         res.status(500).send("Server error");
     }
 });
+const ONE_HOUR = 60 * 60 * 1000; // 1 hour in milliseconds
+
 app.post("/donebuy", checkLoggedIn, async (req, res) => {
-    const user = req.signedCookies.user;
-    const selectedBurger = await Burger.findById(req.body.burgerId);
+    try {
+        const user = req.signedCookies.user;
+        const selectedBurger = await Burger.findById(req.body.burgerId);
 
-    
-    console.log(selectedBurger, "donebuy");
-    res.render("Donebuy", { 
-        title: "Donebuy", 
-        user: req.signedCookies.user, 
-        burger: selectedBurger 
-    });
-     
+        // Set a cookie for the timer (1 hour)
+        const timerExpiration = Date.now() + ONE_HOUR;
+        res.cookie("deliveryTimer", timerExpiration, { httpOnly: true });
+
+        // Set a message cookie for the 1-hour message
+        res.cookie("deliveryMessage", "Your order has been placed and is being prepared!", { httpOnly: true, maxAge: ONE_HOUR });
+
+        res.render("Donebuy", { 
+            title: "Donebuy", 
+            user: req.signedCookies.user, 
+            burger: selectedBurger 
+        });
+    } catch (error) {
+        console.error("Error in donebuy:", error);
+        res.status(500).send("Server error");
+    }
 });
-    
-app.post("/finishbuy", checkLoggedIn, async (req, res) => {
-    const { location, cardNumber, cardExpiry, cardCVV, phoneNumber, email, houseNumber, street, city, postalCode, orderDetails, paymentMethod } = req.body;
-    // console(transaction);
-    // Basic validatio
 
-    // Card number validation (16 digits)
+   
+app.post("/chooshe", checkLoggedIn, async (req, res) => {
+    try {
+        const user = req.signedCookies.user;
+        const selectedBurger = await Burger.findById(req.body.burgerId);
+        const transactions = await Transaction.find({ user: user.username }).lean();
+        // Set a cookie for the timer (1 hour)
+        const timerExpiration = Date.now() + ONE_HOUR;
+        res.cookie("deliveryTimer", timerExpiration, { httpOnly: true });
+
+        res.render("chooshe", { 
+            title: "Chooshe", 
+            user: req.signedCookies.user, 
+            burger: selectedBurger,
+            transactions: transactions
+            
+        });
+    } catch (error) {
+        console.error("Error in chooshe:", error);
+        res.status(500).send("Server error");
+    }
+});
+app.post("/finishbuy", checkLoggedIn, async (req, res) => {
+    const {
+        location = "N/A", // Default value for location if not provided
+        cardNumber,
+        cardExpiry,
+        cardCVV,
+        phoneNumber,
+        email,
+        houseNumber,
+        street,
+        city,
+        postalCode,
+        orderDetails,
+        paymentMethod = "card", // Default to "card" if not provided
+    } = req.body;
+
+    // Basic validation
     if (!/^\d{16}$/.test(cardNumber)) {
         return res.status(400).send("Invalid card number. Please ensure it is 16 digits.");
     }
-
-    // Card CVV validation (3 digits)
     if (!/^\d{3}$/.test(cardCVV)) {
         return res.status(400).send("Invalid CVV. Please ensure it is a 3-digit number.");
     }
-
-    // Phone number validation (basic check for 10 digits)
     if (!/^\d{10}$/.test(phoneNumber)) {
         return res.status(400).send("Invalid phone number. Please ensure it is 10 digits.");
     }
@@ -486,30 +556,28 @@ app.post("/finishbuy", checkLoggedIn, async (req, res) => {
     try {
         // Save transaction to MongoDB
         const transaction = new Transaction({
-            user: req.signedCookies.user.username,  // Username from signed cookies
-            location,                               // Location (if delivery)
-            cardNumber,                             // Card number (for demo purposes)
-            cardExpiry,                             // Card expiry date
-            cardCVV,                                // Card CVV
-            phoneNumber,                            // User's phone number
-            email,                                  // User's email address (optional)
+            user: req.signedCookies.user.username, // Username from signed cookies
+            location,
+            cardNumber,
+            cardExpiry,
+            cardCVV,
+            phoneNumber,
+            email,
             address: {
-                houseNumber,                        // User's house number
-                street,                             // Street name
-                city,                               // City
-                postalCode                          // Postal code
+                houseNumber,
+                street,
+                city,
+                postalCode,
             },
-            orderDetails,                           // Order details (what user ordered)
-            paymentMethod,   
-                      // Payment method                               // Transaction amount
+            orderDetails,
+            paymentMethod,
         });
         await transaction.save();
-        // console.log(transaction, "transaction");
 
-        // Redirect to the "DoneBuy" page
-        res.render("finishbuy", { 
-            title: "finishbuy", 
-            user: req.signedCookies.user, 
+        // Redirect to the "finishbuy" page
+        res.render("finishbuy", {
+            title: "finishbuy",
+            user: req.signedCookies.user,
         });
     } catch (error) {
         console.error("Error saving transaction:", error);
@@ -517,7 +585,17 @@ app.post("/finishbuy", checkLoggedIn, async (req, res) => {
     }
 });
 
+app.get("/Chooshe", checkLoggedIn, async (req, res) => {
+    const user = req.signedCookies.user;
+    const customBurger = req.signedCookies.customBurger;
 
+    if (!customBurger) {
+        return res.redirect("/buying");
+    }
+    else {
+        res.render("Chooshe", { title: "Chooshe", user: user }); 
+    }
+});
 app.get("/Donebuy", checkLoggedIn, async (req, res) => {
     const user = req.signedCookies.user;
     const customBurger = req.signedCookies.customBurger;
@@ -592,27 +670,48 @@ app.get("/onWay", checkLoggedIn, hasPurchased, (req, res) => {
 app.get("/profile", checkLoggedIn, async (req, res) => {
     try {
         const user = await User.findOne({ username: req.signedCookies.user.username });
-
         const customizedBurgers = await CustomizedBurger.find({ user: user._id })
-            .populate('originalBurger')  // Populate original burger details
-            .lean();  // Convert to plain JavaScript object
+            .populate("originalBurger")
+            .lean();
+        const transactions = await Transaction.find({ user: user.username }).lean();
 
-        const transactions = await Transaction.find({ user: user.username }).lean(); // Fetch user's transactions
+        // Retrieve and calculate remaining time from the deliveryTimer cookie
+        const timerExpiration = parseInt(req.cookies.deliveryTimer, 10);
+        let timeRemaining = null;
 
-        console.log("Customized Burgers:", JSON.stringify(customizedBurgers, null, 2));
-        console.log("Transactions:", JSON.stringify(transactions, null, 2));
+        if (timerExpiration && !isNaN(timerExpiration)) {
+            const now = Date.now();
+            timeRemaining = Math.max(timerExpiration - now, 0);
+
+            // Clear the cookie if the timer has expired
+            if (timeRemaining === 0) {
+                res.clearCookie("deliveryTimer");
+            }
+        }
+
+        // Retrieve the message from the cookie
+        const deliveryMessage = req.cookies.deliveryMessage;
+
+        // Clear the message cookie if the timer has expired
+        if (!timeRemaining && deliveryMessage) {
+            res.clearCookie("deliveryMessage");
+        }
 
         res.render("profile", { 
             title: "Profile", 
-            user: user,
-            customizedBurgers: customizedBurgers,
-            transactions: transactions // Pass transactions to the profile page
+            user: user, 
+            customizedBurgers: customizedBurgers, 
+            transactions: transactions,
+            timerRemaining: timeRemaining, // Pass remaining time to the view
+            deliveryMessage: deliveryMessage // Pass message to the view
         });
     } catch (error) {
         console.error("Error fetching profile:", error);
         res.status(500).send("Server error");
     }
 });
+
+
 app.post("/Testing1", checkLoggedIn, async (req, res) => {
     try {
         const transaction = await Transaction.findById(req.params.id);

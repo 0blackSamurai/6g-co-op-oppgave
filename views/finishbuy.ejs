@@ -1,9 +1,40 @@
 <%- include("./partials/header") %>
 <body>
     <%- include("./partials/navbar") %>
-   <h1>takk fir ditt kjøp</h1>
-   <p>Vi er på vei til deg</p>
+    <h1>Takk for ditt kjøp</h1>
+    <p>Vi er på vei til deg</p>
 
-    <script src="/app.js"></script>
+    <!-- Timer Section -->
+    <div id="timerBox" class="timer-box" style="margin-top: 20px; font-size: 18px;">
+        <p id="timerDisplay">Tid til levering: 1 time</p>
+    </div>
+
+    <script>
+        // Countdown Logic
+        function startCountdown() {
+            const timerDisplay = document.getElementById('timerDisplay');
+            let timeRemaining = 60 * 60; // 1 hour in seconds
+
+            function updateTimer() {
+                const minutes = Math.floor(timeRemaining / 60);
+                const seconds = timeRemaining % 60;
+                timerDisplay.textContent = `Tid til levering: ${minutes}m ${seconds}s`;
+
+                if (timeRemaining > 0) {
+                    timeRemaining--;
+                } else {
+                    clearInterval(timerInterval);
+                    timerDisplay.textContent = "Din burger er levert!";
+                }
+            }
+
+            // Update the timer every second
+            const timerInterval = setInterval(updateTimer, 1000);
+            updateTimer();
+        }
+
+        // Start the countdown when the page loads
+        document.addEventListener('DOMContentLoaded', startCountdown);
+    </script>
 </body>
 </html>
